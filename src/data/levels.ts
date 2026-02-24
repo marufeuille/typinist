@@ -1,0 +1,73 @@
+import type { Level } from '../types';
+
+export const LEVELS: Level[] = [
+  {
+    id: 1,
+    name: 'ステージ 1',
+    description: 'まえにすすんでゴールをめざそう！',
+    gridSize: 5,
+    start: { x: 0, y: 4, direction: 'right' },
+    goal: { x: 4, y: 4 },
+    suggestedCommands: [
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+    ],
+  },
+  {
+    id: 2,
+    name: 'ステージ 2',
+    description: 'まがってすすもう！',
+    gridSize: 5,
+    start: { x: 0, y: 4, direction: 'right' },
+    goal: { x: 4, y: 0 },
+    suggestedCommands: [
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'turn_left',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+    ],
+  },
+  {
+    id: 3,
+    name: 'ステージ 3',
+    description: 'ぐるっとまわってゴールへ！',
+    gridSize: 5,
+    start: { x: 0, y: 4, direction: 'up' },
+    goal: { x: 4, y: 0 },
+    suggestedCommands: [
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'turn_right',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+      'move_forward',
+    ],
+  },
+  {
+    id: 4,
+    name: 'ステージ 4',
+    description: 'じぶんでかんがえてゴールへすすもう！',
+    gridSize: 5,
+    start: { x: 0, y: 2, direction: 'right' },
+    goal: { x: 2, y: 0 },
+    // suggestedCommands なし = 自由モード
+  },
+  {
+    id: 5,
+    name: 'ステージ 5',
+    description: 'さいごのちょうせん！',
+    gridSize: 5,
+    start: { x: 2, y: 4, direction: 'up' },
+    goal: { x: 4, y: 2 },
+  },
+];

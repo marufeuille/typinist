@@ -1,0 +1,112 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #4a90e2;
+  color: white;
+  border-radius: 8px 8px 0 0;
+  min-height: 52px;
+  gap: 8px;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.stageInfo {
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+}
+
+.stageDescription {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.moveCount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 2px 10px;
+  min-width: 48px;
+}
+
+.moveCountLabel {
+  font-size: 0.65rem;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.moveCountValue {
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.iconButton {
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  line-height: 1;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.iconButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.resetButton {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.resetButton:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.stageSelectButton {
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.stageSelectButton:hover {
+  background: rgba(255, 255, 255, 0.35);
+}

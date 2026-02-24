@@ -1,0 +1,218 @@
+.app {
+  min-height: 100vh;
+  background: #f0f4f8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.gameContainer {
+  width: 100%;
+  max-width: 860px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mainArea {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  min-height: 420px;
+}
+
+.canvasArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #fafafa;
+}
+
+/* レスポンシブ対応: 768px以下で縦並び */
+@media (max-width: 768px) {
+  .mainArea {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+}
+
+/* ステージ選択モーダル */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.levelList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.levelButton {
+  padding: 12px 16px;
+  background: #f0f6ff;
+  border: 2px solid #d0e3ff;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.levelButton:hover {
+  background: #e0efff;
+  border-color: #4a90e2;
+}
+
+.levelButton.active {
+  background: #e8f0fe;
+  border-color: #4a90e2;
+  color: #1a5fc8;
+}
+
+.levelName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.levelDesc {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+.modalClose {
+  margin-top: 16px;
+  width: 100%;
+  padding: 10px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.modalClose:hover {
+  background: #e8e8e8;
+}
+
+/* クリア画面 */
+.clearScreen {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.clearCard {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 40px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: popIn 0.3s ease-out;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.clearEmoji {
+  font-size: 4rem;
+  margin-bottom: 12px;
+}
+
+.clearTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #f5c842;
+  margin-bottom: 8px;
+}
+
+.clearMessage {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.clearMoveCount {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #4a90e2;
+}
+
+.clearButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.clearButtonNext {
+  padding: 10px 24px;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clearButtonNext:hover {
+  background: #2c5f8a;
+}
+
+.clearButtonRetry {
+  padding: 10px 24px;
+  background: #f0f0f0;
+  color: #555;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clearButtonRetry:hover {
+  background: #e0e0e0;
+}

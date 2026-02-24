@@ -1,0 +1,98 @@
+.palette {
+  padding: 12px;
+  background: #f8f9fa;
+  border-left: 1px solid #e0e0e0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.title {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.commandList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.commandButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+  transition: all 0.15s;
+  width: 100%;
+}
+
+.commandButton:hover {
+  border-color: #4a90e2;
+  background: #f0f6ff;
+}
+
+.commandButton.selected {
+  border-color: #4a90e2;
+  background: #e8f0fe;
+  color: #1a5fc8;
+}
+
+.commandButton.suggested {
+  border-color: #f5c842;
+  background: #fffbe6;
+}
+
+.commandButton.suggested::before {
+  content: '★';
+  color: #f5c842;
+  font-size: 0.9rem;
+}
+
+.commandIcon {
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.commandLabel {
+  flex: 1;
+}
+
+.commandRomaji {
+  font-size: 0.75rem;
+  color: #888;
+  font-family: monospace;
+}
+
+.hint {
+  margin-top: 16px;
+  padding: 10px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #7a6000;
+}
+
+.hintTitle {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
