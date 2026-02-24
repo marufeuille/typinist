@@ -9,6 +9,8 @@ import {
   drawGoal,
   drawCharacter,
   drawObstacles,
+  drawItems,
+  drawDoors,
   drawClearOverlay,
 } from './renderer';
 import styles from './GameCanvas.module.css';
@@ -34,6 +36,8 @@ export const GameCanvas = forwardRef<GameCanvasRef, Props>(
     const gridSize = useGameStore((s) => s.gridSize);
     const goal = useGameStore((s) => s.goal);
     const obstacles = useGameStore((s) => s.obstacles);
+    const items = useGameStore((s) => s.items);
+    const doors = useGameStore((s) => s.doors);
     const isCleared = useGameStore((s) => s.isCleared);
 
     const cellSize = CANVAS_SIZE / gridSize;
@@ -46,12 +50,16 @@ export const GameCanvas = forwardRef<GameCanvasRef, Props>(
         if (!ctx) return;
 
         const snapChar = useGameStore.getState().character;
+        const snapItems = useGameStore.getState().items;
+        const snapDoors = useGameStore.getState().doors;
 
         clearCanvas(ctx, CANVAS_SIZE, CANVAS_SIZE);
         drawGrid(ctx, gridSize, cellSize);
         drawTrail(ctx, useGameStore.getState().trail, cellSize);
         drawGoal(ctx, goal, cellSize);
         drawObstacles(ctx, obstacles, cellSize);
+        drawDoors(ctx, snapDoors, cellSize);
+        drawItems(ctx, snapItems, cellSize);
 
         if (anim) {
           const animX =
@@ -116,7 +124,7 @@ export const GameCanvas = forwardRef<GameCanvasRef, Props>(
       if (!currentAnimRef.current) {
         render(null);
       }
-    }, [character, trail, isCleared, render]);
+    }, [character, trail, items, doors, isCleared, render]);
 
     return (
       <div className={styles.wrapper}>

@@ -1,7 +1,7 @@
 import type { Command, GameAction } from '../types';
 
 /**
- * Step 1 MVPで使用するコマンド定義
+ * 基本コマンド定義（全ステージで使用）
  */
 export const COMMANDS: Command[] = [
   {
@@ -28,10 +28,32 @@ export const COMMANDS: Command[] = [
 ];
 
 /**
+ * コンテキストコマンド定義（条件が揃ったときのみ有効）
+ */
+export const CONTEXT_COMMANDS: Command[] = [
+  {
+    id: 'pick_up',
+    label: 'ひろう',
+    hiragana: 'ひろう',
+    romaji: 'hirou',
+    action: { type: 'pick_up' },
+  },
+  {
+    id: 'open_door',
+    label: 'とびらをひらく',
+    hiragana: 'とびらをひらく',
+    romaji: 'tobiraohiraku',
+    action: { type: 'open_door' },
+  },
+];
+
+export const ALL_COMMANDS: Command[] = [...COMMANDS, ...CONTEXT_COMMANDS];
+
+/**
  * コマンドIDからコマンドを取得する
  */
 export function getCommandById(id: string): Command | undefined {
-  return COMMANDS.find((cmd) => cmd.id === id);
+  return ALL_COMMANDS.find((cmd) => cmd.id === id);
 }
 
 /**
@@ -44,5 +66,7 @@ export function describeAction(action: GameAction): string {
     case 'turn_left':    return '左を向く';
     case 'pen_up':       return 'ペンを上げる';
     case 'pen_down':     return 'ペンを下げる';
+    case 'pick_up':      return 'アイテムを拾う';
+    case 'open_door':    return '扉を開ける';
   }
 }

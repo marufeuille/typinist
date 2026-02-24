@@ -7,13 +7,17 @@ const COMMAND_ICONS: Record<string, string> = {
   turn_left: '↶',
   pen_up: '✏️↑',
   pen_down: '✏️↓',
+  pick_up: '🪙',
+  open_door: '🚪',
 };
 
 type Props = {
   commands: Command[];
   selectedCommand: Command | null;
   onSelect: (command: Command) => void;
-  disabled?: boolean;
+  disabled?: boolean;              // 全体グレーアウト
+  disabledCommandIds?: string[];   // 個別グレーアウト
+  hiddenCommandIds?: string[];     // 非表示だがスペースは維持（じごくモードで未解放のコマンド）
 };
 
 export function CommandPalette({
@@ -21,22 +25,30 @@ export function CommandPalette({
   selectedCommand,
   onSelect,
   disabled = false,
+  disabledCommandIds = [],
+  hiddenCommandIds = [],
 }: Props) {
   return (
     <div className={styles.palette}>
       <div className={styles.title}>コマンド一覧</div>
       <div className={styles.commandList}>
         {commands.map((cmd) => {
+          const isIndividuallyDisabled = disabledCommandIds.includes(cmd.id);
+          const isHidden = hiddenCommandIds.includes(cmd.id);
+          const isDisabled = disabled || isIndividuallyDisabled;
+
           let className = styles.commandButton;
           if (selectedCommand?.id === cmd.id) className += ' ' + styles.selected;
-          if (disabled) className += ' ' + styles.disabled;
+          if (isDisabled) className += ' ' + styles.disabled;
+          if (isHidden) className += ' ' + styles.hidden;
 
           return (
             <button
               key={cmd.id}
               className={className}
-              onClick={() => !disabled && onSelect(cmd)}
-              disabled={disabled}
+              onClick={() => !isDisabled && !isHidden && onSelect(cmd)}
+              disabled={isDisabled || isHidden}
+              aria-hidden={isHidden}
             >
               <span className={styles.commandIcon}>
                 {COMMAND_ICONS[cmd.id] ?? '▶'}

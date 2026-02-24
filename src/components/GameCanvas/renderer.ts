@@ -1,4 +1,4 @@
-import type { Character, Position } from '../../types';
+import type { Character, Door, Item, Position } from '../../types';
 
 const COLORS = {
   grid: '#e0e0e0',
@@ -12,6 +12,12 @@ const COLORS = {
   trailStroke: '#5bb5d5',
   obstacle: '#e57373',
   text: '#333333',
+  item: '#FFD700',
+  itemOutline: '#B8860B',
+  doorClosed: '#8B6914',
+  doorClosedOutline: '#5c4209',
+  doorOpen: '#C8A96E',
+  doorOpenOutline: '#9e7d4a',
 };
 
 /**
@@ -195,7 +201,7 @@ export function drawCharacter(
 }
 
 /**
- * 障害物を描画する（将来のモードB用）
+ * 障害物を描画する
  */
 export function drawObstacles(
   ctx: CanvasRenderingContext2D,
@@ -210,6 +216,79 @@ export function drawObstacles(
       cellSize - 4,
       cellSize - 4
     );
+  }
+}
+
+/**
+ * アイテム（鍵など）を描画する
+ */
+export function drawItems(
+  ctx: CanvasRenderingContext2D,
+  items: Item[],
+  cellSize: number
+): void {
+  const half = cellSize / 2;
+  const radius = cellSize * 0.25;
+
+  for (const item of items) {
+    const cx = item.position.x * cellSize + half;
+    const cy = item.position.y * cellSize + half;
+
+    // 円形の背景
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.item;
+    ctx.fill();
+    ctx.strokeStyle = COLORS.itemOutline;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // ラベルテキスト
+    ctx.fillStyle = COLORS.itemOutline;
+    ctx.font = `bold ${Math.floor(cellSize * 0.28)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.label, cx, cy);
+  }
+}
+
+/**
+ * 扉を描画する
+ * 未開の扉: 茶色のブロック（障害物と区別できる色）
+ * 開いた扉: 薄い色で通れることを示す
+ */
+export function drawDoors(
+  ctx: CanvasRenderingContext2D,
+  doors: Door[],
+  cellSize: number
+): void {
+  for (const door of doors) {
+    const x = door.position.x * cellSize + 2;
+    const y = door.position.y * cellSize + 2;
+    const size = cellSize - 4;
+
+    if (door.isOpen) {
+      // 開いた扉: 薄い枠線のみ
+      ctx.strokeStyle = COLORS.doorOpenOutline;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, size, size);
+    } else {
+      // 閉じた扉: 茶色のブロック
+      ctx.fillStyle = COLORS.doorClosed;
+      ctx.fillRect(x, y, size, size);
+      ctx.strokeStyle = COLORS.doorClosedOutline;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, size, size);
+
+      // 鍵穴マーク
+      const cx = door.position.x * cellSize + cellSize / 2;
+      const cy = door.position.y * cellSize + cellSize / 2;
+      ctx.fillStyle = COLORS.doorClosedOutline;
+      ctx.font = `bold ${Math.floor(cellSize * 0.4)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🔒', cx, cy);
+    }
   }
 }
 

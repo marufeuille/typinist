@@ -63,31 +63,31 @@ typinist/
 
 ---
 
-## 画面構成（Step 1 MVP）
+## 画面構成（Step 2 現在）
 
 ```
-┌─────────────────────────────────────────┐
-│  [Typinist]    ステージ 1    [リセット]    │  ← GameHeader
-├────────────────────┬────────────────────┤
-│                    │                    │
-│   ┌──┬──┬──┬──┬──┐ │   コマンド一覧:     │
-│   │  │  │  │  │☆│ │   ▶ まえにすすむ    │  ← CommandPalette
-│   ├──┼──┼──┼──┼──┤ │     みぎをむく      │
-│   │  │  │  │  │  │ │     ひだりをむく     │
-│   ├──┼──┼──┼──┼──┤ │                    │
-│   │  │  │  │  │  │ │                    │
-│   ├──┼──┼──┼──┼──┤ │                    │
-│   │▶│  │  │  │  │ │                    │
-│   └──┴──┴──┴──┴──┘ │                    │
-│                    │                    │
-│  ← GameCanvas →    │                    │
-├────────────────────┴────────────────────┤
-│                                         │
-│  お手本:  まえにすすむ                     │
-│  ローマ字: [m][a][e][n][i][s][u][s][u][m][u] │
-│  入力:    ma_                            │  ← TypingInput
-│                                         │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  [Typinist]  ステージ 7  [やさしい] [↩][↪] [ステージ] [リセット] │  ← GameHeader
+├────────────────────┬─────────────────────────────────────┤
+│                    │                                     │
+│  ┌──┬──┬──┬──┬──┐  │  コマンド一覧:                       │
+│  │  │  │  │  │☆│  │  ▶ まえにすすむ   maenisusuumu       │
+│  ├──┼──┼──┼──┼──┤  │    みぎをむく    migiwomuku          │  ← CommandPalette
+│  │  │🔒│  │  │  │  │    ひだりをむく   hidariwomuku        │
+│  ├──┼──┼──┼──┼──┤  │  🪙 ひろう       hirou （グレーアウト）│
+│  │  │  │  │  │  │  │  🚪 とびらをひらく tobiraohiraku       │
+│  ├──┼──┼──┼──┼──┤  │    （グレーアウト）                   │
+│  │▶ │  │  │🪙│  │  │                                     │
+│  └──┴──┴──┴──┴──┘  │                                     │
+│                    │                                     │
+│  ← GameCanvas →    │                                     │
+├────────────────────┴─────────────────────────────────────┤
+│                                                          │
+│  お手本:  まえにすすむ                                       │
+│  ローマ字: [m][a][e][n][i][s][u][s][u][m][u]               │
+│  入力:    ma_                                             │  ← TypingInput
+│                                                          │
+└──────────────────────────────────────────────────────────┘
 ```
 
 **レスポンシブ:** 画面幅 < 768px で Canvas + CommandPalette を縦並びに切り替え
@@ -102,7 +102,11 @@ type Direction = 'up' | 'down' | 'left' | 'right';
 type GameAction =
   | { type: 'move_forward' }
   | { type: 'turn_right' }
-  | { type: 'turn_left' };
+  | { type: 'turn_left' }
+  | { type: 'pen_up' }
+  | { type: 'pen_down' }
+  | { type: 'pick_up' }
+  | { type: 'open_door' };
 
 type Command = {
   id: string;
@@ -116,6 +120,24 @@ type Position = { x: number; y: number };
 
 type Character = { x: number; y: number; direction: Direction };
 
+// マップ上に配置されるアイテム（鍵など）
+type Item = {
+  id: string;
+  label: string;   // 「かぎ」など Canvas 描画に使う
+  position: Position;
+};
+
+// 扉（アイテムで開錠可能な障害物）
+type Door = {
+  id: string;
+  position: Position;
+  requiredItemId: string;
+  isOpen: boolean;
+};
+
+// 難易度設定
+type DifficultyMode = 'easy' | 'hard';
+
 type GameState = {
   character: Character;
   trail: Position[];
@@ -124,6 +146,9 @@ type GameState = {
   obstacles: Position[];
   isCleared: boolean;
   penDown: boolean;
+  items: Item[];          // マップ上の残りアイテム
+  inventory: string[];    // 所持アイテムの id
+  doors: Door[];
 };
 
 type Level = {
@@ -135,8 +160,35 @@ type Level = {
   goal: Position;
   obstacles?: Position[];
   suggestedCommands?: string[];
+  items?: Item[];
+  doors?: Array<Omit<Door, 'isOpen'>>;  // レベル定義では isOpen を含めない
 };
 ```
+
+---
+
+## コマンド体系（Step 2）
+
+### 基本コマンド（COMMANDS）
+```typescript
+// src/engine/commands.ts
+export const COMMANDS: Command[] = [move_forward, turn_right, turn_left];
+```
+
+### コンテキストコマンド（CONTEXT_COMMANDS）
+```typescript
+export const CONTEXT_COMMANDS: Command[] = [pick_up, open_door];
+
+// pick_up: hirou（は行・ら行をカバー）
+// open_door: tobiraohiraku（た行・ば行・ら行・わ行・は行・か行をカバー）
+```
+
+### コンテキストコマンドの発動条件
+
+| コマンドID | 条件 |
+|---|---|
+| pick_up | `canPickUp(state)`: 現在地にアイテムがある |
+| open_door | `canOpenDoor(state)`: 前方に未開の扉があり必要アイテム所持 |
 
 ---
 
@@ -148,36 +200,11 @@ type Level = {
 3. ユーザーがキーボードで1文字ずつローマ字を入力
 4. 正しいキー → 緑ハイライト
 5. 間違いキー → 赤フラッシュ（ペナルティなし、やり直し可）
-6. 全文字入力完了 → コマンド実行 → キャラクター移動
+6. 全文字入力完了 → コマンド実行 → キャラクター移動（またはアクション）
 
-### 複数パターン対応ロジック（typingEngine.ts）
-
-```typescript
-// ひらがな1文字に対する受け入れローマ字パターン
-const ROMAJI_PATTERNS: Record<string, string[][]> = {
-  'し': [['s','i'], ['s','h','i']],
-  'つ': [['t','u'], ['t','s','u']],
-  'ち': [['t','i'], ['c','h','i']],
-  // ...
-};
-```
-
-入力中のバッファと各パターンの先頭部分を比較し、
-まだいずれかのパターンに一致できる場合は「受け入れ」、
-全パターンと不一致なら「エラー」。
-
-### TypingState
-
-```typescript
-type TypingState = {
-  targetHiragana: string;
-  targetRomaji: string[];    // 表示用ローマ字（最初の候補）
-  inputBuffer: string;       // 現在入力中のバッファ
-  completedChars: number;    // 完了した文字数
-  isComplete: boolean;
-  lastKeyCorrect: boolean | null;
-};
-```
+### pick_up / open_door の実行
+- アニメーションなしで即時実行
+- `executeAction('pick_up')` / `executeAction('open_door')` を直接呼ぶ
 
 ---
 
@@ -187,16 +214,25 @@ type TypingState = {
 
 ```typescript
 // グリッド線描画
-function drawGrid(ctx: CanvasRenderingContext2D, gridSize: number, cellSize: number): void;
+function drawGrid(ctx, gridSize, cellSize): void;
 
 // ゴール（星マーク）描画
-function drawGoal(ctx: CanvasRenderingContext2D, pos: Position, cellSize: number): void;
+function drawGoal(ctx, pos, cellSize): void;
 
 // キャラクター（三角形矢印）描画
-function drawCharacter(ctx: CanvasRenderingContext2D, char: Character, cellSize: number): void;
+function drawCharacter(ctx, char, cellSize, animX?, animY?, animAngle?): void;
 
 // 軌跡描画
-function drawTrail(ctx: CanvasRenderingContext2D, trail: Position[], cellSize: number): void;
+function drawTrail(ctx, trail, cellSize): void;
+
+// 障害物描画（赤い四角）
+function drawObstacles(ctx, obstacles, cellSize): void;
+
+// アイテム描画（金色の円 + ラベル）
+function drawItems(ctx, items, cellSize): void;
+
+// 扉描画（閉: 茶色ブロック、開: 薄い枠線）
+function drawDoors(ctx, doors, cellSize): void;
 ```
 
 ### アニメーション仕様
@@ -205,50 +241,82 @@ function drawTrail(ctx: CanvasRenderingContext2D, trail: Position[], cellSize: n
 - 移動アニメーション: 250ms、ease-out イージング
 - 回転アニメーション: 150ms
 - コマンドキュー: 複数コマンドを順次実行
+- pick_up / open_door: アニメーションなし（即時）
 
 ---
 
 ## 状態管理設計（Zustand）
 
-### gameStateStore
+### useGameStore
 
 ```typescript
-type GameStateStore = GameState & {
-  // アクション
+type GameStore = GameState & {
+  currentLevel: Level | null;
+  history: GameSnapshot[];  // Undo 用（items/inventory/doors も含む）
+  future: GameSnapshot[];   // Redo 用
+
   initLevel: (level: Level) => void;
-  moveForward: () => void;
-  turnRight: () => void;
-  turnLeft: () => void;
+  executeAction: (
+    actionType: 'move_forward' | 'turn_right' | 'turn_left' | 'pick_up' | 'open_door'
+  ) => boolean;
+  undo: () => boolean;
+  redo: () => boolean;
   reset: () => void;
-  // アニメーション
-  animationState: AnimationState | null;
-  startAnimation: (anim: AnimationState) => void;
-  updateAnimation: (progress: number) => void;
-  completeAnimation: () => void;
 };
 ```
 
-### typingStateStore
+### ヘルパー関数（エクスポート）
 
 ```typescript
-type TypingStateStore = TypingState & {
-  selectCommand: (command: Command) => void;
-  processKey: (key: string) => boolean; // 正解/不正解
-  reset: () => void;
-};
+// src/engine/gameState.ts
+export function canPickUp(state: GameState): boolean;
+export function canOpenDoor(state: GameState): boolean;
 ```
 
 ---
 
-## 実装順序
+## 難易度設定ロジック（App.tsx）
 
-| サブステップ | 内容 |
-|---|---|
-| 1-1 | プロジェクトセットアップ |
-| 1-2 | Canvas描画基盤 |
-| 1-3 | ゲーム状態管理 |
-| 1-4 | アニメーション実装 |
-| 1-5 | タイピングエンジン |
-| 1-6 | UI統合 |
-| 1-7 | レベルデータとプレイ体験 |
-| 1-8 | テスト |
+```typescript
+// やさしいモード: コンテキストコマンドを常時表示、条件未達ならグレーアウト
+// じごくモード: 条件達成時のみ表示
+const visibleCommands = useMemo(() => {
+  if (difficulty === 'easy') return [...COMMANDS, ...CONTEXT_COMMANDS];
+  const applicable = CONTEXT_COMMANDS.filter(cmd =>
+    cmd.id === 'pick_up' ? canPickUp(state) :
+    cmd.id === 'open_door' ? canOpenDoor(state) : false
+  );
+  return [...COMMANDS, ...applicable];
+}, [difficulty, character, items, inventory, doors]);
+
+const disabledCommandIds = useMemo(() => {
+  if (difficulty !== 'easy') return [];
+  return CONTEXT_COMMANDS
+    .filter(cmd => !conditionMet(cmd.id, state))
+    .map(cmd => cmd.id);
+}, [difficulty, character, items, inventory, doors]);
+```
+
+---
+
+## レベルデータ（Step 2 現在: 8ステージ）
+
+| Stage | グリッド | 特徴 |
+|---|---|---|
+| 1 | 5x5 | チュートリアル（直進のみ） |
+| 2 | 5x5 | 曲がる（ターン1回） |
+| 3 | 5x5 | 障害物あり（迂回） |
+| 4 | 5x5 | 自由モード + 障害物 |
+| 5 | 5x5 | 自由モード + 障害物 |
+| 6 | 5x5 | 障害物迷路（自由モード） |
+| 7 | 5x5 | アイテム + 扉（写経モード） |
+| 8 | 6x6 | 複合パズル（写経モード） |
+
+---
+
+## テスト方針
+
+- `src/test/*.test.ts` に配置
+- ゲームロジック（engine/）のユニットテストを重点的にカバー
+- `npm run test` が通らない状態でコミットしない
+- 現在: 72件のテストが全パス

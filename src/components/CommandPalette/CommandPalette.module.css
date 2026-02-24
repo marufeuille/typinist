@@ -96,3 +96,9 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* じごくモード: スペースは保持しつつ完全に非表示 */
+.hidden {
+  visibility: hidden;
+  pointer-events: none;
+}

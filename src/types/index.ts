@@ -7,7 +7,9 @@ export type GameAction =
   | { type: 'turn_right' }
   | { type: 'turn_left' }
   | { type: 'pen_up' }
-  | { type: 'pen_down' };
+  | { type: 'pen_down' }
+  | { type: 'pick_up' }
+  | { type: 'open_door' };
 
 // ゲームコマンド定義
 export type Command = {
@@ -43,6 +45,26 @@ export type AnimationState = {
   progress: number; // 0〜1
 };
 
+// マップ上に配置されるアイテム（鍵など）
+export type Item = {
+  id: string;
+  label: string;   // 「かぎ」など Canvas 描画・インベントリ表示に使う
+  position: Position;
+};
+
+// 扉（特定アイテムで開錠可能な障害物）
+export type Door = {
+  id: string;
+  position: Position;
+  requiredItemId: string;  // どのアイテムで開くか
+  isOpen: boolean;
+};
+
+// 難易度設定
+// easy: コンテキストコマンドは常時表示（条件未満はグレーアウト）
+// hard: 条件達成時のみ表示
+export type DifficultyMode = 'easy' | 'hard';
+
 // ゲーム状態
 export type GameState = {
   character: Character;
@@ -52,6 +74,9 @@ export type GameState = {
   obstacles: Position[];
   isCleared: boolean;
   penDown: boolean;
+  items: Item[];
+  inventory: string[];  // 所持アイテムの id
+  doors: Door[];
 };
 
 // レベルデータ
@@ -64,6 +89,8 @@ export type Level = {
   goal: Position;
   obstacles?: Position[];
   suggestedCommands?: string[]; // コマンドID の順序（写経モード用）
+  items?: Item[];
+  doors?: Array<Omit<Door, 'isOpen'>>;  // レベル定義では isOpen を含めない
 };
 
 // タイピング入力状態
