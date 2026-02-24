@@ -9,6 +9,7 @@ export type GameAction =
   | { type: 'pen_up' }
   | { type: 'pen_down' }
   | { type: 'pick_up' }
+  | { type: 'unlock_door' }
   | { type: 'open_door' };
 
 // ゲームコマンド定義
@@ -52,12 +53,13 @@ export type Item = {
   position: Position;
 };
 
-// 扉（特定アイテムで開錠可能な障害物）
+// 扉（鍵付き or 鍵なしの障害物）
 export type Door = {
   id: string;
   position: Position;
-  requiredItemId: string;  // どのアイテムで開くか
+  requiredItemId?: string;  // 省略時は鍵不要（最初から開錠済み）
   isOpen: boolean;
+  isUnlocked: boolean;      // 鍵なし扉は true、鍵あり扉は unlock_door 後に true
 };
 
 // 難易度設定
@@ -90,7 +92,7 @@ export type Level = {
   obstacles?: Position[];
   suggestedCommands?: string[]; // コマンドID の順序（写経モード用）
   items?: Item[];
-  doors?: Array<Omit<Door, 'isOpen'>>;  // レベル定義では isOpen を含めない
+  doors?: Array<Omit<Door, 'isOpen' | 'isUnlocked'>>;  // レベル定義では isOpen・isUnlocked を含めない
 };
 
 // タイピング入力状態

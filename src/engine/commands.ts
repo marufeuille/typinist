@@ -39,6 +39,13 @@ export const CONTEXT_COMMANDS: Command[] = [
     action: { type: 'pick_up' },
   },
   {
+    id: 'unlock_door',
+    label: 'かぎをひらく',
+    hiragana: 'かぎをひらく',
+    romaji: 'kagiwohiraku',
+    action: { type: 'unlock_door' },
+  },
+  {
     id: 'open_door',
     label: 'とびらをひらく',
     hiragana: 'とびらをひらく',
@@ -67,6 +74,7 @@ export function describeAction(action: GameAction): string {
     case 'pen_up':       return 'ペンを上げる';
     case 'pen_down':     return 'ペンを下げる';
     case 'pick_up':      return 'アイテムを拾う';
+    case 'unlock_door':  return '扉を開錠する';
     case 'open_door':    return '扉を開ける';
   }
 }

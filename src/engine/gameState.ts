@@ -19,7 +19,7 @@ type GameStore = GameState & {
   future: GameSnapshot[];
   // アクション
   initLevel: (level: Level) => void;
-  executeAction: (actionType: 'move_forward' | 'turn_right' | 'turn_left' | 'pick_up' | 'open_door') => boolean;
+  executeAction: (actionType: 'move_forward' | 'turn_right' | 'turn_left' | 'pick_up' | 'unlock_door' | 'open_door') => boolean;
   undo: () => boolean;
   redo: () => boolean;
   reset: () => void;
@@ -56,12 +56,19 @@ export function canPickUp(state: GameState): boolean {
   return state.items.some(i => positionsEqual(i.position, charPos));
 }
 
-// 前方に未開の扉があり、必要アイテムを所持しているか判定する
+// 前方に未開かつ開錠済みの扉があるか判定する
 export function canOpenDoor(state: GameState): boolean {
   const next = getNextPosition(state.character.x, state.character.y, state.character.direction);
-  const door = state.doors.find(d => !d.isOpen && positionsEqual(d.position, next));
+  const door = state.doors.find(d => !d.isOpen && d.isUnlocked && positionsEqual(d.position, next));
+  return door !== undefined;
+}
+
+// 前方に未開錠の扉があり、必要アイテムを所持しているか判定する
+export function canUnlockDoor(state: GameState): boolean {
+  const next = getNextPosition(state.character.x, state.character.y, state.character.direction);
+  const door = state.doors.find(d => !d.isOpen && !d.isUnlocked && positionsEqual(d.position, next));
   if (!door) return false;
-  return state.inventory.includes(door.requiredItemId);
+  return door.requiredItemId !== undefined && state.inventory.includes(door.requiredItemId);
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -77,7 +84,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       direction: level.start.direction as Direction,
     };
     const trail: Position[] = [{ x: character.x, y: character.y }];
-    const doors = (level.doors ?? []).map(d => ({ ...d, isOpen: false }));
+    const doors = (level.doors ?? []).map(d => ({
+      ...d,
+      isOpen: false,
+      isUnlocked: d.requiredItemId === undefined,
+    }));
     set({
       currentLevel: level,
       character,
@@ -155,11 +166,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return true;
     }
 
+    if (actionType === 'unlock_door') {
+      const next = getNextPosition(character.x, character.y, character.direction);
+      const door = doors.find(d => !d.isOpen && !d.isUnlocked && positionsEqual(d.position, next));
+      if (!door || !door.requiredItemId) return false;
+      if (!inventory.includes(door.requiredItemId)) return false;
+
+      set({
+        doors: doors.map(d => d.id === door.id ? { ...d, isUnlocked: true } : d),
+        history: [...history, snapshot(state)],
+        future: [],
+      });
+      return true;
+    }
+
     if (actionType === 'open_door') {
       const next = getNextPosition(character.x, character.y, character.direction);
-      const door = doors.find(d => !d.isOpen && positionsEqual(d.position, next));
+      const door = doors.find(d => !d.isOpen && d.isUnlocked && positionsEqual(d.position, next));
       if (!door) return false;
-      if (!inventory.includes(door.requiredItemId)) return false;
 
       set({
         doors: doors.map(d => d.id === door.id ? { ...d, isOpen: true } : d),

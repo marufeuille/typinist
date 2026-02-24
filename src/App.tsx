@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Command, DifficultyMode } from './types';
-import { useGameStore, canPickUp, canOpenDoor } from './engine/gameState';
+import { useGameStore, canPickUp, canOpenDoor, canUnlockDoor } from './engine/gameState';
 import { COMMANDS, CONTEXT_COMMANDS } from './engine/commands';
 import { LEVELS } from './data/levels';
 import { GameCanvas } from './components/GameCanvas/GameCanvas';
@@ -47,6 +47,7 @@ export default function App() {
     return CONTEXT_COMMANDS
       .filter(cmd => {
         if (cmd.id === 'pick_up') return !canPickUp(state);
+        if (cmd.id === 'unlock_door') return !canUnlockDoor(state);
         if (cmd.id === 'open_door') return !canOpenDoor(state);
         return false;
       })
@@ -60,6 +61,7 @@ export default function App() {
     return CONTEXT_COMMANDS
       .filter(cmd => {
         if (cmd.id === 'pick_up') return !canPickUp(state);
+        if (cmd.id === 'unlock_door') return !canUnlockDoor(state);
         if (cmd.id === 'open_door') return !canOpenDoor(state);
         return false;
       })
@@ -83,8 +85,8 @@ export default function App() {
 
     const actionType = command.action.type;
 
-    // pick_up / open_door はアニメーションなし
-    if (actionType === 'pick_up' || actionType === 'open_door') {
+    // pick_up / unlock_door / open_door はアニメーションなし
+    if (actionType === 'pick_up' || actionType === 'unlock_door' || actionType === 'open_door') {
       executeAction(actionType);
       setSelectedCommand(null);
       return;

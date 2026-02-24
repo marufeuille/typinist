@@ -14,8 +14,10 @@ const COLORS = {
   text: '#333333',
   item: '#FFD700',
   itemOutline: '#B8860B',
-  doorClosed: '#8B6914',
-  doorClosedOutline: '#5c4209',
+  doorLocked: '#8B6914',
+  doorLockedOutline: '#5c4209',
+  doorUnlocked: '#C49A22',
+  doorUnlockedOutline: '#8B6914',
   doorOpen: '#C8A96E',
   doorOpenOutline: '#9e7d4a',
 };
@@ -254,8 +256,9 @@ export function drawItems(
 
 /**
  * 扉を描画する
- * 未開の扉: 茶色のブロック（障害物と区別できる色）
- * 開いた扉: 薄い色で通れることを示す
+ * 施錠扉（isUnlocked: false）: 暗い茶色 + 🔒
+ * 開錠済み扉（isUnlocked: true, isOpen: false）: 明るい金茶色（アイコンなし）
+ * 開いた扉（isOpen: true）: 薄い枠線のみ
  */
 export function drawDoors(
   ctx: CanvasRenderingContext2D,
@@ -272,22 +275,27 @@ export function drawDoors(
       ctx.strokeStyle = COLORS.doorOpenOutline;
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, size, size);
-    } else {
-      // 閉じた扉: 茶色のブロック
-      ctx.fillStyle = COLORS.doorClosed;
+    } else if (!door.isUnlocked) {
+      // 施錠扉: 暗い茶色 + 🔒
+      ctx.fillStyle = COLORS.doorLocked;
       ctx.fillRect(x, y, size, size);
-      ctx.strokeStyle = COLORS.doorClosedOutline;
+      ctx.strokeStyle = COLORS.doorLockedOutline;
       ctx.lineWidth = 2;
       ctx.strokeRect(x, y, size, size);
 
-      // 鍵穴マーク
       const cx = door.position.x * cellSize + cellSize / 2;
       const cy = door.position.y * cellSize + cellSize / 2;
-      ctx.fillStyle = COLORS.doorClosedOutline;
       ctx.font = `bold ${Math.floor(cellSize * 0.4)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🔒', cx, cy);
+    } else {
+      // 開錠済み扉: 明るい金茶色（アイコンなし = 開けるだけ）
+      ctx.fillStyle = COLORS.doorUnlocked;
+      ctx.fillRect(x, y, size, size);
+      ctx.strokeStyle = COLORS.doorUnlockedOutline;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, size, size);
     }
   }
 }
