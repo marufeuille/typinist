@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import type { Command } from './types';
-import { useGameStore } from './engine/gameState';
-import { COMMANDS } from './engine/commands';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import type { Command, DifficultyMode } from './types';
+import { useGameStore, canPickUp, canOpenDoor } from './engine/gameState';
+import { COMMANDS, CONTEXT_COMMANDS } from './engine/commands';
 import { LEVELS } from './data/levels';
 import { GameCanvas } from './components/GameCanvas/GameCanvas';
 import type { GameCanvasRef } from './components/GameCanvas/GameCanvas';
@@ -15,6 +15,7 @@ export default function App() {
   const [showStageSelect, setShowStageSelect] = useState(true);
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [difficulty, setDifficulty] = useState<DifficultyMode>('easy');
 
   const canvasRef = useRef<GameCanvasRef>(null);
 
@@ -23,6 +24,9 @@ export default function App() {
   const currentLevel = useGameStore((s) => s.currentLevel);
   const history = useGameStore((s) => s.history);
   const future = useGameStore((s) => s.future);
+  const items = useGameStore((s) => s.items);
+  const inventory = useGameStore((s) => s.inventory);
+  const doors = useGameStore((s) => s.doors);
   const initLevel = useGameStore((s) => s.initLevel);
   const executeAction = useGameStore((s) => s.executeAction);
   const undo = useGameStore((s) => s.undo);
@@ -32,6 +36,35 @@ export default function App() {
   useEffect(() => {
     initLevel(LEVELS[0]);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 常に全コマンドを表示（レイアウトシフトを防ぐため）
+  const allCommands = useMemo(() => [...COMMANDS, ...CONTEXT_COMMANDS], []);
+
+  // 個別にグレーアウトするコマンドのID（やさしいモード: 条件未満のコンテキストコマンド）
+  const disabledCommandIds = useMemo(() => {
+    if (difficulty !== 'easy') return [];
+    const state = useGameStore.getState();
+    return CONTEXT_COMMANDS
+      .filter(cmd => {
+        if (cmd.id === 'pick_up') return !canPickUp(state);
+        if (cmd.id === 'open_door') return !canOpenDoor(state);
+        return false;
+      })
+      .map(cmd => cmd.id);
+  }, [difficulty, character, items, inventory, doors]);
+
+  // 非表示（スペースは維持）にするコマンドのID（じごくモード: 条件未達のコンテキストコマンド）
+  const hiddenCommandIds = useMemo(() => {
+    if (difficulty !== 'hard') return [];
+    const state = useGameStore.getState();
+    return CONTEXT_COMMANDS
+      .filter(cmd => {
+        if (cmd.id === 'pick_up') return !canPickUp(state);
+        if (cmd.id === 'open_door') return !canOpenDoor(state);
+        return false;
+      })
+      .map(cmd => cmd.id);
+  }, [difficulty, character, items, inventory, doors]);
 
   const handleLevelSelect = (index: number) => {
     setCurrentLevelIndex(index);
@@ -48,15 +81,24 @@ export default function App() {
   const handleTypingComplete = (command: Command) => {
     if (isAnimating) return;
 
+    const actionType = command.action.type;
+
+    // pick_up / open_door はアニメーションなし
+    if (actionType === 'pick_up' || actionType === 'open_door') {
+      executeAction(actionType);
+      setSelectedCommand(null);
+      return;
+    }
+
+    const moveOrTurn = actionType as 'move_forward' | 'turn_right' | 'turn_left';
     const prevChar = { ...character };
-    const actionType = command.action.type as 'move_forward' | 'turn_right' | 'turn_left';
-    const success = executeAction(actionType);
+    const success = executeAction(moveOrTurn);
 
     if (success) {
       setIsAnimating(true);
       const nextChar = useGameStore.getState().character;
 
-      if (actionType === 'move_forward') {
+      if (moveOrTurn === 'move_forward') {
         canvasRef.current?.enqueue({
           type: 'move',
           fromX: prevChar.x,
@@ -115,10 +157,12 @@ export default function App() {
           moveCount={history.length}
           canUndo={history.length > 0 && !isAnimating}
           canRedo={future.length > 0 && !isAnimating}
+          difficulty={difficulty}
           onUndo={handleUndo}
           onRedo={handleRedo}
           onReset={handleReset}
           onStageSelect={() => setShowStageSelect(true)}
+          onDifficultyChange={setDifficulty}
         />
 
         <div className={styles.mainArea}>
@@ -127,10 +171,12 @@ export default function App() {
           </div>
 
           <CommandPalette
-            commands={COMMANDS}
+            commands={allCommands}
             selectedCommand={selectedCommand}
             onSelect={setSelectedCommand}
             disabled={isAnimating || isCleared}
+            disabledCommandIds={disabledCommandIds}
+            hiddenCommandIds={hiddenCommandIds}
           />
         </div>
 

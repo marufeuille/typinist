@@ -1,4 +1,4 @@
-import type { Level } from '../../types';
+import type { DifficultyMode, Level } from '../../types';
 import styles from './GameHeader.module.css';
 
 type Props = {
@@ -6,10 +6,12 @@ type Props = {
   moveCount: number;
   canUndo: boolean;
   canRedo: boolean;
+  difficulty: DifficultyMode;
   onUndo: () => void;
   onRedo: () => void;
   onReset: () => void;
   onStageSelect: () => void;
+  onDifficultyChange: (difficulty: DifficultyMode) => void;
 };
 
 export function GameHeader({
@@ -17,10 +19,12 @@ export function GameHeader({
   moveCount,
   canUndo,
   canRedo,
+  difficulty,
   onUndo,
   onRedo,
   onReset,
   onStageSelect,
+  onDifficultyChange,
 }: Props) {
   return (
     <header className={styles.header}>
@@ -44,6 +48,14 @@ export function GameHeader({
           <span className={styles.moveCountLabel}>手数</span>
           <span className={styles.moveCountValue}>{moveCount}</span>
         </div>
+
+        <button
+          className={`${styles.difficultyToggle} ${difficulty === 'hard' ? styles.difficultyHard : ''}`}
+          onClick={() => onDifficultyChange(difficulty === 'easy' ? 'hard' : 'easy')}
+          title="難易度を切り替える"
+        >
+          {difficulty === 'easy' ? 'やさしい' : 'じごく'}
+        </button>
 
         <button
           className={styles.iconButton}

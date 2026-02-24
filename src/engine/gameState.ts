@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Character, Direction, GameState, Level, Position } from '../types';
+import type { Character, Direction, Door, GameState, Item, Level, Position } from '../types';
 import { getNextPosition, isInBounds, positionsEqual, rotateLeft, rotateRight } from './grid';
 
 // Undo/Redo 用のスナップショット型
@@ -8,6 +8,9 @@ type GameSnapshot = {
   trail: Position[];
   isCleared: boolean;
   penDown: boolean;
+  items: Item[];
+  inventory: string[];
+  doors: Door[];
 };
 
 type GameStore = GameState & {
@@ -16,7 +19,7 @@ type GameStore = GameState & {
   future: GameSnapshot[];
   // アクション
   initLevel: (level: Level) => void;
-  executeAction: (actionType: 'move_forward' | 'turn_right' | 'turn_left') => boolean;
+  executeAction: (actionType: 'move_forward' | 'turn_right' | 'turn_left' | 'pick_up' | 'open_door') => boolean;
   undo: () => boolean;
   redo: () => boolean;
   reset: () => void;
@@ -30,6 +33,9 @@ const DEFAULT_STATE: GameState = {
   obstacles: [],
   isCleared: false,
   penDown: false,
+  items: [],
+  inventory: [],
+  doors: [],
 };
 
 function snapshot(state: GameState): GameSnapshot {
@@ -38,7 +44,24 @@ function snapshot(state: GameState): GameSnapshot {
     trail: [...state.trail],
     isCleared: state.isCleared,
     penDown: state.penDown,
+    items: state.items.map(i => ({ ...i, position: { ...i.position } })),
+    inventory: [...state.inventory],
+    doors: state.doors.map(d => ({ ...d, position: { ...d.position } })),
   };
+}
+
+// 現在地にアイテムがあるか判定する
+export function canPickUp(state: GameState): boolean {
+  const charPos = { x: state.character.x, y: state.character.y };
+  return state.items.some(i => positionsEqual(i.position, charPos));
+}
+
+// 前方に未開の扉があり、必要アイテムを所持しているか判定する
+export function canOpenDoor(state: GameState): boolean {
+  const next = getNextPosition(state.character.x, state.character.y, state.character.direction);
+  const door = state.doors.find(d => !d.isOpen && positionsEqual(d.position, next));
+  if (!door) return false;
+  return state.inventory.includes(door.requiredItemId);
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -54,6 +77,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       direction: level.start.direction as Direction,
     };
     const trail: Position[] = [{ x: character.x, y: character.y }];
+    const doors = (level.doors ?? []).map(d => ({ ...d, isOpen: false }));
     set({
       currentLevel: level,
       character,
@@ -63,6 +87,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       obstacles: level.obstacles ?? [],
       isCleared: false,
       penDown: true,
+      items: level.items ? level.items.map(i => ({ ...i, position: { ...i.position } })) : [],
+      inventory: [],
+      doors,
       history: [],
       future: [],
     });
@@ -72,13 +99,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (state.isCleared) return false;
 
-    const { character, gridSize, goal, obstacles, trail, penDown, history } = state;
+    const { character, gridSize, goal, obstacles, trail, penDown, history, items, inventory, doors } = state;
 
     if (actionType === 'move_forward') {
       const next = getNextPosition(character.x, character.y, character.direction);
       if (!isInBounds(next.x, next.y, gridSize)) return false;
       const isObstacle = obstacles.some((obs) => positionsEqual(obs, next));
       if (isObstacle) return false;
+      // 未開の扉もブロック対象
+      const blockedByDoor = doors.some(d => !d.isOpen && positionsEqual(d.position, next));
+      if (blockedByDoor) return false;
 
       const newTrail = penDown ? [...trail, { x: next.x, y: next.y }] : trail;
       const isCleared = positionsEqual(next, goal);
@@ -105,6 +135,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (actionType === 'turn_left') {
       set({
         character: { ...character, direction: rotateLeft(character.direction) },
+        history: [...history, snapshot(state)],
+        future: [],
+      });
+      return true;
+    }
+
+    if (actionType === 'pick_up') {
+      const charPos = { x: character.x, y: character.y };
+      const item = items.find(i => positionsEqual(i.position, charPos));
+      if (!item) return false;
+
+      set({
+        items: items.filter(i => i.id !== item.id),
+        inventory: [...inventory, item.id],
+        history: [...history, snapshot(state)],
+        future: [],
+      });
+      return true;
+    }
+
+    if (actionType === 'open_door') {
+      const next = getNextPosition(character.x, character.y, character.direction);
+      const door = doors.find(d => !d.isOpen && positionsEqual(d.position, next));
+      if (!door) return false;
+      if (!inventory.includes(door.requiredItemId)) return false;
+
+      set({
+        doors: doors.map(d => d.id === door.id ? { ...d, isOpen: true } : d),
         history: [...history, snapshot(state)],
         future: [],
       });

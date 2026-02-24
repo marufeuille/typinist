@@ -52,6 +52,9 @@ export function TypingInput({ command, onComplete, disabled = false }: Props) {
       if (disabled || !command || !engineRef.current) return;
       if (isComplete) return;
 
+      // IME変換中（isComposing）は無視。key="Process" も同様
+      if (e.nativeEvent.isComposing || e.key === 'Process') return;
+
       // 記号・特殊キーを無視
       if (e.key.length !== 1) return;
       e.preventDefault();
@@ -85,11 +88,14 @@ export function TypingInput({ command, onComplete, disabled = false }: Props) {
   return (
     <div className={styles.container}>
       {/* ブラウザ拡張のキー横取りを防ぐための隠し入力欄 */}
+      {/* inputMode="none" で IME・変換候補を完全に抑制する */}
       <input
         ref={hiddenInputRef}
         className={styles.hiddenInput}
         onKeyDown={handleKeyDown}
+        onCompositionStart={(e) => e.preventDefault()}
         readOnly
+        inputMode="none"
         aria-hidden="true"
         tabIndex={command && !disabled ? 0 : -1}
       />
